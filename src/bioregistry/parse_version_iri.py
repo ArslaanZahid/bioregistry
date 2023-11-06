@@ -1,7 +1,7 @@
 """This module is dedicated to parsing the version from an IRI."""
 
 import re
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, NamedTuple
 from urllib.parse import urlparse
 
 from tqdm import tqdm
@@ -34,9 +34,13 @@ def _match_any_part(iri, pattern):
     return any(bool(pattern.match(part)) for part in parse_result.path.split("/"))
 
 
-def parse_obo_version_iri(
-    version_iri: str, obo_prefix: str
-) -> Union[Tuple[str, Optional[str], str], Tuple[None, None, None]]:
+class VersionIRIParseResult(NamedTuple):
+    version_length: str
+    version_type: Optional[str]
+    version: str
+
+
+def parse_obo_version_iri(version_iri: str, obo_prefix: str) -> Optional[VersionIRIParseResult]:
     """Parse an OBO version IRI."""
     obo_prefix = obo_prefix.lower()
     parts = [
@@ -46,15 +50,21 @@ def parse_obo_version_iri(
     for version_length, version_iri_prefix in parts:
         if not version_iri.startswith(version_iri_prefix):
             continue
+        back_half = version_iri[len(version_iri_prefix) :]
+        back_half_stripped = back_half.strip("/")
+        if SEMVER_PATTERN.fullmatch(back_half_stripped):
+            return VersionIRIParseResult(version_length, "date", back_half_stripped)
+        if DATE_PATTERN.fullmatch(back_half_stripped):
+            return VersionIRIParseResult(version_length, "semver", back_half_stripped)
         try:
-            version, filename = version_iri[len(version_iri_prefix) :].split("/", 1)
+            version, filename = back_half.split("/", 1)
         except ValueError:
-            tqdm.write(f"[{obo_prefix}] issue parsing IRI back-half: {version_iri}")
-            return None, None, None
+            tqdm.write(f"[{obo_prefix}] issue parsing back-half of {version_iri} ({back_half})")
+            return None
         if not any(
             filename.startswith(f"{obo_prefix}.{ext}") for ext in ("json", "owl", "obo", "ofn")
         ):
-            return None, None, None
+            return None
         version_type: Optional[str]
         if SEMVER_PATTERN.fullmatch(version):
             version_type = "semver"
@@ -64,5 +74,5 @@ def parse_obo_version_iri(
             version_type = None
         # remove leading v, we know it's a version
         version = version.lstrip("v")
-        return version_length, version_type, version
-    return None, None, None
+        return VersionIRIParseResult(version_length, version_type, version)
+    return None

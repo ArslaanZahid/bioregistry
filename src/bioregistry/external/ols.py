@@ -128,9 +128,9 @@ def _get_license(ols_id, config) -> Optional[str]:
 def _get_version(ols_id, config, processing: OLSConfig) -> Optional[str]:
     version_iri = config.get("versionIri")
     if version_iri:
-        _, _, version = parse_obo_version_iri(version_iri, ols_id)
-        if version:
-            return version
+        parse_result = parse_obo_version_iri(version_iri, ols_id)
+        if parse_result:
+            return parse_result.version
 
     version = config.get("version")
     if version is None and processing.version_iri_prefix:
