@@ -390,7 +390,7 @@ def compare():  # noqa:C901
     provider_counts = [_count_providers(resource) for resource in read_registry().values()]
     fig, ax = plt.subplots(figsize=SINGLE_FIG)
     sns.barplot(
-        data=sorted(Counter(provider_counts).items()), ci=None, color="blue", alpha=0.4, ax=ax
+        data=sorted(Counter(provider_counts).items()), errorbar=None, color="blue", alpha=0.4, ax=ax
     )
     ax.set_xlabel("Number Providers")
     ax.set_ylabel("Count")
