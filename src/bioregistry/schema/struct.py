@@ -1624,6 +1624,12 @@ class Resource(BaseModel):
         prefix = self.rrid["prefix"]
         return f"https://scicrunch.org/resolver/RRID:{prefix}_$1"
 
+    def get_wikidata_uri_format(self) -> Optional[str]:
+        """Get the Wikidata URI format."""
+        if not self.wikidata:
+            return None
+        return self.wikidata.get("uri_format")
+
     def get_rdf_uri_format(self) -> Optional[str]:
         """Get the URI format string for the given prefix for RDF usages."""
         if self.rdf_uri_format:
@@ -1653,6 +1659,7 @@ class Resource(BaseModel):
         "n2t": get_n2t_uri_format,
         "ols": get_ols_uri_format,
         "rrid": get_rrid_uri_format,
+        "wikidata": get_wikidata_uri_format,
     }
 
     #: The point of this priority order is to figure out what URI format string
